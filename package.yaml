@@ -1,0 +1,46 @@
+
+name: pian
+description: A text editor
+
+language: GHC2021
+
+default-extensions:
+  - DataKinds
+  - DeriveAnyClass
+  - DerivingStrategies
+  - LambdaCase
+  - NoStarIsType
+  - TypeFamilies
+  - DefaultSignatures
+  - UndecidableInstances
+
+dependencies:
+  - base
+  - large-anon
+  - finite-typelits
+  - ghc-typelits-knownnat
+  - ghc-typelits-natnormalise
+
+library:
+   source-dirs: src
+   dependencies: 
+   - cursor
+   - brick
+   - vty
+   - directory
+   ghc-options: 
+     - -fplugin=Data.Record.Anon.Plugin 
+     - -fplugin=GHC.TypeLits.KnownNat.Solver
+     - -fplugin=GHC.TypeLits.Normalise
+
+executables:
+  tui:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - pian
+
