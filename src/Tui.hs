@@ -21,7 +21,9 @@ import Brick.Types
     , EventM(..)
     )
 
---import Brick.Widgets.Core
+import Brick.Widgets.Core
+    ( strWrap
+    )
 
 import Graphics.Vty.Input.Events
     ( Event(..) -- EvKey
@@ -32,6 +34,26 @@ import Graphics.Vty.Attributes
     ( defAttr
     )
 
+import Cursor.TextField
+    ( TextFieldCursor
+    , makeTextFieldCursor
+    )
+
+import Data.Text.IO qualified as TextIO
+
+import Path {- from package path -}
+    ( fromAbsFile
+    )
+
+import Path.IO {- from path-io -}
+    ( resolveFile'
+    , forgivingAbsence
+    )
+
+import Data.Maybe
+    ( fromMaybe
+    )
+
 tui :: IO ()
 tui = do
     initialState <- buildInitialState
@@ -39,7 +61,8 @@ tui = do
     print endState
 
 data TuiState 
-    = TuiState
+    = TuiState 
+        { stateCursor :: TextFieldCursor }
     deriving stock (Show, Eq)
 
 data ResourceName
@@ -57,11 +80,18 @@ tuiApp =
         }
 
 buildInitialState :: IO TuiState
-buildInitialState = pure TuiState
+buildInitialState = do
+    path <- resolveFile' "example.txt"
+    maybeContents <- forgivingAbsence $ TextIO.readFile (fromAbsFile path) -- lose the readFile per Snoyman's warning
+    let contents = fromMaybe "" maybeContents
+    let tfc = makeTextFieldCursor contents
+    pure TuiState { stateCursor = tfc }
 
 drawTui :: TuiState -> [ Widget ResourceName ]
-drawTui _ts = []
+drawTui _ts = [ strWrap (show _ts) ]
 
 handleTuiEvent :: BrickEvent n e -> EventM n TuiState ()
 handleTuiEvent (VtyEvent (EvKey (KChar 'q') [])) = halt
 handleTuiEvent _ = pure ()
+
+-- stack install --file-watch
