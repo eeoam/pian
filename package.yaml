@@ -24,20 +24,27 @@ dependencies:
 
 library:
    source-dirs: src
+   default-extensions:
+   - TemplateHaskell
    dependencies: 
    - cursor
    - brick
+   - cursor-brick
    - vty
    - directory
    - path
    - path-io
+   - pretty-show
+   - microlens
+   - microlens-th
+   - microlens-mtl
    ghc-options: 
      - -fplugin=Data.Record.Anon.Plugin 
      - -fplugin=GHC.TypeLits.KnownNat.Solver
      - -fplugin=GHC.TypeLits.Normalise
 
 executables:
-  tui:
+  pian-go:
     main: Main.hs
     source-dirs: app
     ghc-options:
