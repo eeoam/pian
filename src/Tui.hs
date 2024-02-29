@@ -67,12 +67,14 @@ import Cursor.TextField
     , textFieldCursorRemove
     , textFieldCursorDelete
     , textFieldCursorInsertNewline
+    , rebuildTextFieldCursor
     )
 
 import Cursor.Types ( dullMDelete )
 
 import Cursor.Brick.TextField
 
+import Data.Text ( Text )
 import Data.Text.IO qualified as TextIO
 
 import Path {- from package path -}
@@ -102,6 +104,16 @@ import Lens.Micro.TH
 
 import Lens.Micro.Mtl (use, (<~), (.=))
 
+import System.Environment 
+    ( getArgs
+    )
+
+import System.Exit 
+    ( die
+    )
+
+import Control.Monad ( unless )
+
 data TuiState 
     = TuiState 
         { _stateCursor :: TextFieldCursor }
@@ -110,9 +122,18 @@ makeLenses ''TuiState
 
 tui :: IO ()
 tui = do
-    initialState <- buildInitialState
-    endState <- defaultMain tuiApp initialState
-    print endState
+    args <- getArgs
+    case args of
+        [] -> die "No argument to choose file to edit."
+        (fp : _) -> do 
+            path <- resolveFile' fp
+            maybeContents <- forgivingAbsence $ TextIO.readFile (fromAbsFile path) -- lose the readFile per Snoyman's warning
+            let contents = fromMaybe "" maybeContents
+            initialState <- buildInitialState contents
+            endState <- defaultMain tuiApp initialState
+            let contents' = rebuildTextFieldCursor (_stateCursor endState)
+            unless (contents == contents') $
+                TextIO.writeFile (fromAbsFile path) contents' -- lose the writeFile per Snoyman's warning
 
 
 
@@ -133,11 +154,8 @@ tuiApp =
 textColor = attrName "text"
 bg = attrName "bg"
 
-buildInitialState :: IO TuiState
-buildInitialState = do
-    path <- resolveFile' "example.txt"
-    maybeContents <- forgivingAbsence $ TextIO.readFile (fromAbsFile path) -- lose the readFile per Snoyman's warning
-    let contents = fromMaybe "" maybeContents
+buildInitialState :: Text -> IO TuiState
+buildInitialState contents = do
     let tfc = makeTextFieldCursor contents
     pure TuiState { _stateCursor = tfc }
 
