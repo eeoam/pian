@@ -165,7 +165,7 @@ drawTui ts = [ forceAttr textColor
                $ border 
                $ padLeftRight 1
                $ selectedTextFieldCursorWidget ResourceName (_stateCursor ts) 
-            ,  forceAttr bg $ fill '@'
+            --,  forceAttr bg $ fill '@'
             ]
 
 handleTuiEvent :: BrickEvent n e -> EventM n TuiState ()
